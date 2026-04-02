@@ -1,4 +1,6 @@
 // netlify/functions/storage.js
+// Storage persistente com Netlify Blobs
+
 const { getStore } = require('@netlify/blobs');
 
 const STORE_NAME = 'vip-bot';
@@ -48,7 +50,6 @@ async function list(store) {
     const value = await blobs.get(entry.key, { type: 'json' });
     if (value) results.push(value);
   }
-
   return results;
 }
 
@@ -80,7 +81,7 @@ async function updateInArray(store, id, updates) {
   return true;
 }
 
-async function getDefaultConfig() {
+function getDefaultConfig() {
   return {
     welcome_message: `🔥 *Bem-vindo(a)!*\n\nVocê chegou no lugar certo! 😈\n\nAqui você tem acesso a conteúdos exclusivos e sensuais.\n\nUse os botões abaixo para explorar:`,
     vip_message: `👑 *Área VIP*\n\nNosso plano VIP te dá acesso TOTAL a:\n\n✅ Fotos e vídeos exclusivos\n✅ Lives privadas\n✅ Conteúdo diário\n✅ Suporte prioritário\n\nEscolha seu plano abaixo:`,
@@ -100,7 +101,7 @@ async function getDefaultConfig() {
 
 async function getConfig() {
   const cfg = await get('config', 'settings');
-  return cfg || (await getDefaultConfig());
+  return cfg || getDefaultConfig();
 }
 
 async function saveConfig(config) {

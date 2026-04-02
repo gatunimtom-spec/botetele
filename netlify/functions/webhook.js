@@ -1,12 +1,10 @@
 // netlify/functions/webhook.js
 // Webhook PIX - Recebe confirmações de pagamento dos gateways
-// Compatível com: EfiBank, MercadoPago, Asaas, PagSeguro, e outros
 
 const https = require('https');
 const crypto = require('crypto');
 const storage = require('./storage');
 
-// ─── Helper: Enviar mensagem Telegram ────────────────────────────────────────
 function telegramRequest(method, body) {
   return new Promise((resolve, reject) => {
     const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -25,12 +23,18 @@ function telegramRequest(method, body) {
 
     const req = https.request(options, (res) => {
       let raw = '';
-      res.on('data', (c) => (raw += c));
+      res.on('data', (c) => {
+        raw += c;
+      });
       res.on('end', () => {
-        try { resolve(JSON.parse(raw)); }
-        catch (e) { resolve({ ok: false }); }
+        try {
+          resolve(JSON.parse(raw));
+        } catch (e) {
+          resolve({ ok: false });
+        }
       });
     });
+
     req.on('error', reject);
     req.write(data);
     req.end();
@@ -46,14 +50,13 @@ async function sendMessage(chatId, text, extra = {}) {
   });
 }
 
-// ─── Liberar acesso VIP ───────────────────────────────────────────────────────
-function grantVipAccess(userId, days) {
+async function grantVipAccess(userId, days) {
   const now = new Date();
   const expiration = days
     ? new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString()
-    : null; // null = permanente
+    : null;
 
-  storage.set('users', String(userId), {
+  await storage.set('users', String(userId), {
     vip_status: true,
     vip_expiration: expiration,
     vip_granted_at: now.toISOString(),
@@ -62,36 +65,28 @@ function grantVipAccess(userId, days) {
   return expiration;
 }
 
-// ─── Confirmar pagamento e liberar VIP ──────────────────────────────────────
 async function confirmPayment(transactionId, gatewayData = {}) {
-  // Busca pagamento pendente
-  const payments = storage.listArray('payments', (p) => p.id === transactionId);
+  const payments = await storage.listArray('payments', (p) => p.id === transactionId);
   const payment = payments[0];
 
   if (!payment) {
-    console.warn(`[Webhook] Transação não encontrada: ${transactionId}`);
     return { success: false, error: 'Transação não encontrada' };
   }
 
   if (payment.status === 'paid') {
-    console.log(`[Webhook] Transação já processada: ${transactionId}`);
     return { success: true, already_paid: true };
   }
 
-  // Atualiza status do pagamento
-  storage.updateInArray('payments', transactionId, {
+  await storage.updateInArray('payments', transactionId, {
     status: 'paid',
     paid_at: new Date().toISOString(),
     gateway_data: gatewayData,
   });
 
-  // Libera acesso VIP
-  const expiration = grantVipAccess(payment.user_id, payment.days || 30);
-  const config = storage.getConfig();
+  const expiration = await grantVipAccess(payment.user_id, payment.days || 30);
+  const config = await storage.getConfig();
 
-  // Notifica usuário no Telegram
   try {
-    const daysText = payment.days ? `${payment.days} dias` : 'permanente';
     const expirationText = expiration
       ? `Validade: ${new Date(expiration).toLocaleDateString('pt-BR')}`
       : 'Acesso permanente! 🎉';
@@ -104,22 +99,16 @@ async function confirmPayment(transactionId, gatewayData = {}) {
 
     await sendMessage(payment.user_id, message, {
       reply_markup: {
-        inline_keyboard: [
-          [{ text: '⭐ Acessar Área VIP', url: config.vip_content_link }],
-        ],
+        inline_keyboard: [[{ text: '⭐ Acessar Área VIP', url: config.vip_content_link }]],
       },
     });
   } catch (e) {
     console.error('[Webhook] Erro ao notificar usuário:', e.message);
   }
 
-  console.log(`[Webhook] ✅ Pagamento confirmado: ${transactionId} - User: ${payment.user_id}`);
   return { success: true, user_id: payment.user_id, plan: payment.plan_id };
 }
 
-// ─── Parsers para diferentes gateways ────────────────────────────────────────
-
-// EfiBank / Gerencianet
 function parseEfiBank(body) {
   if (!body.pix) return null;
   const pix = body.pix[0];
@@ -132,11 +121,9 @@ function parseEfiBank(body) {
   };
 }
 
-// MercadoPago
 function parseMercadoPago(body) {
   if (body.type !== 'payment') return null;
   if (body.action !== 'payment.updated') return null;
-  // ID da transação deve estar no campo external_reference
   return {
     transactionId: body.data?.id?.toString(),
     status: body.data?.status === 'approved' ? 'paid' : 'pending',
@@ -145,7 +132,6 @@ function parseMercadoPago(body) {
   };
 }
 
-// Asaas
 function parseAsaas(body) {
   if (body.event !== 'PAYMENT_RECEIVED' && body.event !== 'PAYMENT_CONFIRMED') return null;
   return {
@@ -156,7 +142,6 @@ function parseAsaas(body) {
   };
 }
 
-// PagBank / PagSeguro
 function parsePagBank(body) {
   if (!body.charges) return null;
   const charge = body.charges[0];
@@ -169,7 +154,6 @@ function parsePagBank(body) {
   };
 }
 
-// Mock / Teste manual
 function parseMock(body) {
   if (!body.transaction_id && !body.txid) return null;
   return {
@@ -179,9 +163,7 @@ function parseMock(body) {
   };
 }
 
-// ─── Detecta e parseia gateway automaticamente ───────────────────────────────
-function detectGateway(body, headers) {
-  // Tenta cada parser em ordem
+function detectGateway(body) {
   return (
     parseEfiBank(body) ||
     parseMercadoPago(body) ||
@@ -192,14 +174,12 @@ function detectGateway(body, headers) {
   );
 }
 
-// ─── Valida assinatura do webhook (quando disponível) ────────────────────────
 function validateSignature(body, headers) {
   const secret = process.env.WEBHOOK_SECRET;
-  if (!secret) return true; // Sem validação configurada
+  if (!secret) return true;
 
-  // HMAC SHA-256 (padrão comum)
   const signature = headers['x-signature'] || headers['x-webhook-signature'] || '';
-  if (!signature) return true; // Gateway não envia signature
+  if (!signature) return true;
 
   const expected = crypto
     .createHmac('sha256', secret)
@@ -209,9 +189,7 @@ function validateSignature(body, headers) {
   return signature === expected || signature === `sha256=${expected}`;
 }
 
-// ─── HANDLER PRINCIPAL ───────────────────────────────────────────────────────
 exports.handler = async (event) => {
-  // Apenas POST
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
@@ -223,26 +201,18 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  // Valida assinatura
-  if (!validateSignature(event.body, event.headers)) {
-    console.warn('[Webhook] Assinatura inválida');
+  if (!validateSignature(event.body, event.headers || {})) {
     return { statusCode: 403, body: JSON.stringify({ error: 'Invalid signature' }) };
   }
 
-  // Parse do gateway
-  const parsed = detectGateway(body, event.headers);
-
+  const parsed = detectGateway(body);
   if (!parsed) {
-    console.log('[Webhook] Payload não reconhecido:', JSON.stringify(body).substring(0, 200));
     return {
       statusCode: 200,
       body: JSON.stringify({ received: true, processed: false }),
     };
   }
 
-  console.log(`[Webhook] Evento recebido: ${JSON.stringify(parsed)}`);
-
-  // Só processa pagamentos confirmados
   if (parsed.status !== 'paid') {
     return {
       statusCode: 200,
@@ -250,7 +220,6 @@ exports.handler = async (event) => {
     };
   }
 
-  // Confirma pagamento
   const result = await confirmPayment(parsed.transactionId, { ...parsed, raw: body });
 
   return {
@@ -260,6 +229,7 @@ exports.handler = async (event) => {
   };
 };
 
-// Exporta para uso interno (admin-api)
-exports.confirmPayment = confirmPayment;
-exports.grantVipAccess = grantVipAccess;
+module.exports = {
+  confirmPayment,
+  grantVipAccess,
+};
