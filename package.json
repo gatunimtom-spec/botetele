@@ -1,0 +1,27 @@
+{
+  "name": "vip-bot-telegram",
+  "version": "1.0.0",
+  "description": "Bot Telegram para monetização via PIX com painel admin completo",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "dev": "netlify dev",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^9.0.4"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "pix",
+    "monetization",
+    "serverless"
+  ],
+  "license": "MIT"
+}

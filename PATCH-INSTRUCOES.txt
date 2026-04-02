@@ -1,0 +1,12 @@
+Arquivos já prontos para substituir.
+
+Passos:
+1. Substitua a pasta netlify/functions pelos arquivos deste pacote.
+2. Substitua package.json por este package.json.
+3. Rode: npm install
+4. Faça novo deploy no Netlify.
+5. Envie /start no bot e atualize o painel.
+
+Observação:
+- O storage agora usa Netlify Blobs.
+- O site precisa estar rodando no Netlify para persistência real.
