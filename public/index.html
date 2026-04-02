@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — VIP Bot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --card: #111118;
+      --border: #1e1e2e;
+      --accent: #e040fb;
+      --accent2: #7c3aed;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --success: #22c55e;
+      --error: #ef4444;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(224,64,251,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(224,64,251,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    /* Glow orbs */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(224,64,251,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .login-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      padding: 2rem;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .logo-icon {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 0.5rem;
+      filter: drop-shadow(0 0 20px rgba(224,64,251,0.6));
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { filter: drop-shadow(0 0 20px rgba(224,64,251,0.6)); }
+      50% { filter: drop-shadow(0 0 35px rgba(224,64,251,0.9)); }
+    }
+
+    .logo h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo p {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      backdrop-filter: blur(10px);
+      box-shadow:
+        0 0 0 1px rgba(224,64,251,0.05),
+        0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(224,64,251,0.15);
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 0.9rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 0.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    button[type="submit"]:hover { opacity: 0.9; }
+    button[type="submit"]:active { transform: scale(0.98); }
+    button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .error-msg {
+      display: none;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: var(--error);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-top: 1rem;
+      text-align: center;
+    }
+
+    .error-msg.show { display: block; }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">
+      <span class="logo-icon">👑</span>
+      <h1>VIP Bot Admin</h1>
+      <p>Painel de Controle</p>
+    </div>
+
+    <div class="card">
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="password">Senha de Acesso</label>
+          <input type="password" id="password" placeholder="••••••••••" required autofocus />
+        </div>
+        <button type="submit" id="submitBtn">Entrar no Painel</button>
+        <div class="error-msg" id="errorMsg">Senha incorreta. Tente novamente.</div>
+      </form>
+    </div>
+
+    <p class="footer-note">Acesso restrito a administradores autorizados.</p>
+  </div>
+
+  <script>
+    const API = '/api/admin-api';
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const errEl = document.getElementById('errorMsg');
+      const password = document.getElementById('password').value;
+
+      btn.disabled = true;
+      btn.textContent = 'Entrando...';
+      errEl.classList.remove('show');
+
+      try {
+        const res = await fetch(`${API}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.token) {
+          localStorage.setItem('admin_token', data.token);
+          window.location.href = '/dashboard.html';
+        } else {
+          errEl.classList.add('show');
+          btn.disabled = false;
+          btn.textContent = 'Entrar no Painel';
+        }
+      } catch (err) {
+        errEl.textContent = 'Erro de conexão. Tente novamente.';
+        errEl.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = 'Entrar no Painel';
+      }
+    });
+
+    // Redireciona se já logado
+    if (localStorage.getItem('admin_token')) {
+      window.location.href = '/dashboard.html';
+    }
+  </script>
+</body>
+</html>
