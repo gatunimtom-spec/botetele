@@ -83,7 +83,7 @@ async function updateInArray(store, id, updates) {
 
 function getDefaultConfig() {
   return {
-    welcome_message: `🔥 *Bem-vindo(a)!*\n\nVocê chegou no lugar certo! 😈\n\nAqui você tem acesso a conteúdos exclusivos e sensuais.\n\nUse os botões abaixo para explorar:`,
+    welcome_message: `🔥 *teste Bem-vindo(a)!*\n\nVocê chegou no lugar certo! 😈\n\nAqui você tem acesso a conteúdos exclusivos e sensuais.\n\nUse os botões abaixo para explorar:`,
     vip_message: `👑 *Área VIP*\n\nNosso plano VIP te dá acesso TOTAL a:\n\n✅ Fotos e vídeos exclusivos\n✅ Lives privadas\n✅ Conteúdo diário\n✅ Suporte prioritário\n\nEscolha seu plano abaixo:`,
     payment_pending: `⏳ *Pagamento Pendente*\n\nSeu PIX está sendo processado!\n\nAssim que confirmarmos, você recebe acesso VIP imediatamente. 🔥`,
     payment_confirmed: `✅ *Pagamento Confirmado!*\n\n🎉 Parabéns! Você agora é VIP!\n\nSeu acesso foi liberado. Aproveite! 😈`,
